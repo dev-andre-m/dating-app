@@ -6,6 +6,7 @@
 *.userosscache
 *.sln.docstates
 .vscode/
+.vs/
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)
@@ -58,3 +59,10 @@ artifacts/
 
 
 *.dll
+
+#Migrations
+API/Data/Migrations/
+
+API/.config/
+.gitignore.bak
+API/datingapp.db
