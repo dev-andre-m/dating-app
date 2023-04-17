@@ -42,10 +42,10 @@ namespace API.Controllers
         {
             var username = User.GetUsername();
             var user = await _userRepository.GetUserByUsernameAsync(username);
-            if(user == null) return NotFound();
+            if (user == null) return NotFound();
 
             _mapper.Map(memberUpdateDto, user);
-            if(await _userRepository.SaveAllAsync()) return NoContent();
+            if (await _userRepository.SaveAllAsync()) return NoContent();
             return BadRequest("Failed to update user");
         }
 
@@ -53,23 +53,40 @@ namespace API.Controllers
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
             var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
-            if(user == null) return NotFound();
+            if (user == null) return NotFound();
             var result = await _photoService.AddPhotoAsync(file);
-            if(result.Error != null) return BadRequest(result.Error.Message);
+            if (result.Error != null) return BadRequest(result.Error.Message);
             var photo = new Photo
             {
                 Url = result.SecureUrl.AbsoluteUri,
                 PublicId = result.PublicId
             };
 
-            if(user.Photos.Count == 0) photo.IsMain = true;
+            if (user.Photos.Count == 0) photo.IsMain = true;
             user.Photos.Add(photo);
             if (await _userRepository.SaveAllAsync())
-            { 
-                return CreatedAtAction(nameof(GetUser), new {username = user.UserName}, _mapper.Map<PhotoDto>(photo));
+            {
+                return CreatedAtAction(nameof(GetUser), new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
             }
             return BadRequest();
         }
 
+        [HttpPut("set-main-photo/{photoId}")]
+        public async Task<ActionResult> SetMainPhoto(int photoId)
+        {
+            var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
+            if (user == null) return NotFound();
+
+            var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
+            if (photo == null) return NotFound();
+
+            if (photo.IsMain) return BadRequest("This is already your main photo");
+            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+            if (currentMain != null) currentMain.IsMain = false;
+            photo.IsMain = true;
+
+            if (await _userRepository.SaveAllAsync()) return NoContent();
+            return BadRequest("Problem setting the main photo");
+        }
     }
 }
