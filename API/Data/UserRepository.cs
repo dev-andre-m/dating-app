@@ -14,7 +14,7 @@ namespace API.Data
         private readonly DataContext _context;
         private readonly IMapper _mapper;
 
-        public UserRepository(DataContext context, IMapper mapper) 
+        public UserRepository(DataContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -46,8 +46,8 @@ namespace API.Data
             };
 
             return await PagedList<MemberDto>.CreateAsync(
-                query.AsNoTracking().ProjectTo<MemberDto>(_mapper.ConfigurationProvider), 
-                userParams.PageNumber, 
+                query.AsNoTracking().ProjectTo<MemberDto>(_mapper.ConfigurationProvider),
+                userParams.PageNumber,
                 userParams.PageSize);
         }
 
