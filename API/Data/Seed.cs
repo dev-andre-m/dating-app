@@ -13,7 +13,7 @@ namespace API.Data
         {
             if (await userManager.Users.AnyAsync()) return;
             var userData = await File.ReadAllTextAsync("Data/UserSeedData.json");
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            //var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var users = JsonSerializer.Deserialize<List<AppUser>>(userData);
             var roles = new List<AppRole>
             {
