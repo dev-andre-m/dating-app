@@ -76,9 +76,12 @@ namespace API.Controllers
         {
             var photo = await _uow.PhotoRepository.GetPhotoById(photoId);
 
-            if (photo == null) return BadRequest();
+            if (photo == null) return NotFound("Could not find photo");
 
             if (photo.IsApproved == (int)PhotoApprovalStatus.Waiting) photo.IsApproved = (int)PhotoApprovalStatus.Approved;
+
+            var user = await _uow.UserRepository.GetUserByPhotoId(photoId);
+            if (!user.Photos.Any(x => x.IsMain)) photo.IsMain = true;
 
             await _uow.Complete();
             return Ok();
