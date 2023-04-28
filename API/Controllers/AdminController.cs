@@ -1,5 +1,6 @@
 ﻿using API.DTOs;
 using API.Entities;
+using API.Enums;
 using API.Helpers;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +14,13 @@ namespace API.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IUnitOfWork _uow;
+        private readonly IPhotoService _photoService;
 
-        public AdminController(UserManager<AppUser> userManager, IUnitOfWork uow)
+        public AdminController(UserManager<AppUser> userManager, IUnitOfWork uow, IPhotoService photoService)
         {
             _userManager = userManager;
             _uow = uow;
+            _photoService = photoService;
         }
 
         [Authorize(Policy = "RequireAdminRole")]
@@ -66,5 +69,49 @@ namespace API.Controllers
             var photos = await _uow.PhotoRepository.GetUnapprovedPhotos();
             return Ok(photos);
         }
+
+        [Authorize(Policy = "ModeratePhotoRole")]
+        [HttpPost("approve-photo/{photoId}")]
+        public async Task<ActionResult> ApprovePhoto(int photoId)
+        {
+            var photo = await _uow.PhotoRepository.GetPhotoById(photoId);
+
+            if (photo == null) return BadRequest();
+
+            if (photo.IsApproved == (int)PhotoApprovalStatus.Waiting) photo.IsApproved = (int)PhotoApprovalStatus.Approved;
+
+            await _uow.Complete();
+            return Ok();
+        }
+
+        [Authorize(Policy = "ModeratePhotoRole")]
+        [HttpPost("reject-photo/{photoId}")]
+        public async Task<ActionResult> RejectPhoto(int photoId)
+        {
+            var photo = await _uow.PhotoRepository.GetPhotoById(photoId);
+
+            if (photo == null) return BadRequest();
+
+            if (photo.PublicId != null)
+            {
+                var result = await _photoService.DeletePhotoAsync(photo.PublicId);
+
+                if (result.Result == "ok")
+                {
+                    photo.IsApproved = (int)PhotoApprovalStatus.Rejected;
+                    _uow.PhotoRepository.RemovePhoto(photo);
+                }
+            }
+            else
+            {
+                photo.IsApproved = (int)PhotoApprovalStatus.Rejected;
+                _uow.PhotoRepository.RemovePhoto(photo);
+
+            }
+
+            await _uow.Complete();
+            return Ok();
+        }
+
     }
 }
