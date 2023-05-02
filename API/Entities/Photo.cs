@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using API.Enums;
 
 namespace API.Entities
 {
@@ -11,5 +12,6 @@ namespace API.Entities
         public string PublicId { get; set; }
         public int AppUserId { get; set; }
         public AppUser AppUser { get; set; }
+        public int IsApproved { get; set; } = (int)PhotoApprovalStatus.Waiting;
     }
 }
